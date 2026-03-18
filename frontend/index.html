@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered OCR and translation system for Nepali and Sinhalese texts to English. Extract text from images and PDFs with machine learning.">
+    <title>TransLingua — Nepali & Sinhalese to English Translator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="url(#brandGrad)"/>
+                    <path d="M8 12h16M8 16h12M8 20h14M20 8l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32">
+                            <stop stop-color="#6366f1"/>
+                            <stop offset="1" stop-color="#8b5cf6"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="brand-name">TransLingua</span>
+            <span class="brand-badge">AI</span>
+        </div>
+        <div class="nav-links">
+            <a href="#translator" class="nav-link active" data-section="translator">Translate</a>
+            <a href="#text-translate" class="nav-link" data-section="text-translate">Text Only</a>
+            <a href="#status" class="nav-link" data-section="status">System Status</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-icon" id="themeToggle" title="Toggle theme">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero" id="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse-dot"></span>
+                AI-Powered Translation Engine
+            </div>
+            <h1 class="hero-title">
+                Translate <span class="gradient-text">Nepali</span> &
+                <span class="gradient-text">Sinhalese</span><br>
+                Texts to English
+            </h1>
+            <p class="hero-subtitle">
+                Upload images or PDFs containing Nepali (Devanagari) or Sinhalese text.
+                Our AI extracts and translates the content to English — works offline with local ML models.
+            </p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="statLanguages">2</div>
+                    <div class="stat-label">Languages</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statFormats">7+</div>
+                    <div class="stat-label">File Formats</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statEngine">ML</div>
+                    <div class="stat-label">Neural Engine</div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="floating-card card-1">
+                <span class="card-script">नेपाली</span>
+                <span class="card-arrow">→</span>
+                <span class="card-english">English</span>
+            </div>
+            <div class="floating-card card-2">
+                <span class="card-script">සිංහල</span>
+                <span class="card-arrow">→</span>
+                <span class="card-english">English</span>
+            </div>
+            <div class="floating-card card-3">
+                <span class="card-icon">📄</span>
+                <span class="card-label">PDF & Images</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Translator Section -->
+    <main>
+        <section class="section" id="translator">
+            <div class="section-header">
+                <h2 class="section-title">Document Translation</h2>
+                <p class="section-subtitle">Upload an image or PDF containing Nepali or Sinhalese text</p>
+            </div>
+
+            <div class="translator-container">
+                <!-- Upload Area -->
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-inner" id="dropZone">
+                        <div class="upload-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <h3 class="upload-title">Drop your file here</h3>
+                        <p class="upload-text">or click to browse</p>
+                        <p class="upload-formats">Supports: PNG, JPG, JPEG, BMP, TIFF, WebP, PDF</p>
+                        <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.tif,.webp,.pdf" hidden>
+                        <button class="btn btn-primary" id="browseBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Browse Files
+                        </button>
+                    </div>
+
+                    <!-- File Preview -->
+                    <div class="file-preview" id="filePreview" style="display:none;">
+                        <div class="preview-header">
+                            <div class="preview-info">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <div>
+                                    <span class="preview-filename" id="previewFilename"></span>
+                                    <span class="preview-size" id="previewSize"></span>
+                                </div>
+                            </div>
+                            <button class="btn-icon btn-remove" id="removeFile" title="Remove file">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="preview-image-container" id="previewImageContainer" style="display:none;">
+                            <img id="previewImage" alt="Preview">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls-area">
+                    <div class="control-group">
+                        <label class="control-label">Source Language</label>
+                        <div class="language-selector">
+                            <button class="lang-btn active" data-lang="nepali" id="langNepali">
+                                <span class="lang-script">नेपाली</span>
+                                <span class="lang-name">Nepali</span>
+                            </button>
+                            <button class="lang-btn" data-lang="sinhalese" id="langSinhalese">
+                                <span class="lang-script">සිංහල</span>
+                                <span class="lang-name">Sinhalese</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Processing Mode</label>
+                        <div class="mode-selector">
+                            <button class="mode-btn active" data-mode="pipeline" id="modePipeline">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M8 12l2 2 4-4"/>
+                                </svg>
+                                OCR + Translate
+                            </button>
+                            <button class="mode-btn" data-mode="ocr" id="modeOCR">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <path d="M7 7h4M7 12h10M7 17h6"/>
+                                </svg>
+                                OCR Only
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg btn-process" id="processBtn" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Process Document
+                    </button>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-area" id="progressArea" style="display:none;">
+                    <div class="progress-card">
+                        <div class="progress-header">
+                            <div class="spinner"></div>
+                            <span class="progress-text" id="progressText">Processing...</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="progress-steps">
+                            <div class="step" id="stepUpload">
+                                <span class="step-dot"></span>
+                                <span>Uploading</span>
+                            </div>
+                            <div class="step" id="stepOCR">
+                                <span class="step-dot"></span>
+                                <span>Extracting Text</span>
+                            </div>
+                            <div class="step" id="stepTranslate">
+                                <span class="step-dot"></span>
+                                <span>Translating</span>
+                            </div>
+                            <div class="step" id="stepDone">
+                                <span class="step-dot"></span>
+                                <span>Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="results-area" id="resultsArea" style="display:none;">
+                    <div class="results-header">
+                        <h3>Translation Results</h3>
+                        <div class="results-meta">
+                            <span class="meta-badge" id="resultConfidence">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                <span id="confidenceValue">--</span>% confidence
+                            </span>
+                            <span class="meta-badge" id="resultPages" style="display:none;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span id="pagesValue">--</span> pages
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="results-panels">
+                        <div class="result-panel">
+                            <div class="panel-header">
+                                <h4>
+                                    <span class="panel-dot source"></span>
+                                    Extracted Text
+                                    <span class="panel-lang" id="sourceLangLabel">Nepali</span>
+                                </h4>
+                                <button class="btn-icon btn-copy" data-target="sourceText" title="Copy text">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="panel-content" id="sourceText" contenteditable="false">
+                                Extracted text will appear here...
+                            </div>
+                        </div>
+
+                        <div class="panel-divider">
+                            <div class="divider-arrow">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                    <polyline points="12 5 19 12 12 19"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="result-panel">
+                            <div class="panel-header">
+                                <h4>
+                                    <span class="panel-dot target"></span>
+                                    English Translation
+                                    <span class="panel-lang">English</span>
+                                </h4>
+                                <button class="btn-icon btn-copy" data-target="translatedText" title="Copy text">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="panel-content" id="translatedText" contenteditable="false">
+                                Translation will appear here...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Section -->
+                    <div class="feedback-section" id="feedbackSection" style="display:none;">
+                        <div class="feedback-header">
+                            <h4>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                                </svg>
+                                Help Improve Translations
+                            </h4>
+                            <p>Submit corrections to help our ML model learn and improve.</p>
+                        </div>
+                        <div class="feedback-form">
+                            <div class="rating-group">
+                                <label>Translation Quality</label>
+                                <div class="star-rating" id="starRating">
+                                    <button class="star" data-rating="1">★</button>
+                                    <button class="star" data-rating="2">★</button>
+                                    <button class="star" data-rating="3">★</button>
+                                    <button class="star" data-rating="4">★</button>
+                                    <button class="star" data-rating="5">★</button>
+                                </div>
+                            </div>
+                            <div class="correction-group">
+                                <label for="correctedTranslation">Corrected Translation (optional)</label>
+                                <textarea id="correctedTranslation" placeholder="If the translation is incorrect, provide the correct English translation here..." rows="4"></textarea>
+                            </div>
+                            <button class="btn btn-secondary" id="submitFeedback">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                                Submit Feedback
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="results-actions">
+                        <button class="btn btn-secondary" id="downloadResult">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download Translation
+                        </button>
+                        <button class="btn btn-outline" id="newTranslation">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="1 4 1 10 7 10"/>
+                                <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+                            </svg>
+                            New Translation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Text-only Translation Section -->
+        <section class="section" id="text-translate" style="display:none;">
+            <div class="section-header">
+                <h2 class="section-title">Text Translation</h2>
+                <p class="section-subtitle">Paste Nepali or Sinhalese text directly for translation</p>
+            </div>
+
+            <div class="text-translator">
+                <div class="text-panels">
+                    <div class="text-panel">
+                        <div class="text-panel-header">
+                            <div class="language-selector compact">
+                                <button class="lang-btn small active" data-lang="nepali" id="textLangNepali">
+                                    <span class="lang-script">नेपाली</span> Nepali
+                                </button>
+                                <button class="lang-btn small" data-lang="sinhalese" id="textLangSinhalese">
+                                    <span class="lang-script">සිංහල</span> Sinhalese
+                                </button>
+                            </div>
+                            <span class="char-count" id="charCount">0 characters</span>
+                        </div>
+                        <textarea id="sourceInput" placeholder="Type or paste text here..." rows="12"></textarea>
+                    </div>
+
+                    <div class="text-divider">
+                        <button class="btn btn-primary btn-round" id="translateTextBtn" title="Translate">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                <polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="text-panel">
+                        <div class="text-panel-header">
+                            <span class="panel-lang">English</span>
+                            <button class="btn-icon btn-copy" data-target="translationOutput" title="Copy">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="translation-output" id="translationOutput">
+                            Translation will appear here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Status Section -->
+        <section class="section" id="status" style="display:none;">
+            <div class="section-header">
+                <h2 class="section-title">System Status</h2>
+                <p class="section-subtitle">Monitor OCR engine and ML translation models</p>
+            </div>
+
+            <div class="status-grid" id="statusGrid">
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <div class="status-icon tesseract">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                        </div>
+                        <h3>Tesseract OCR Engine</h3>
+                    </div>
+                    <div class="status-details" id="tesseractStatus">
+                        <div class="status-row">
+                            <span>Status</span>
+                            <span class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Nepali Support</span>
+                            <span class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Sinhalese Support</span>
+                            <span class="status-value loading">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <div class="status-icon translation">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+                            </svg>
+                        </div>
+                        <h3>Translation Models</h3>
+                    </div>
+                    <div class="status-details" id="translationStatus">
+                        <div class="status-row">
+                            <span>Nepali → English</span>
+                            <span class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Sinhalese → English</span>
+                            <span class="status-value loading">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <div class="status-icon feedback">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+                            </svg>
+                        </div>
+                        <h3>ML Feedback Data</h3>
+                    </div>
+                    <div class="status-details" id="feedbackStatus">
+                        <div class="status-row">
+                            <span>Nepali Corrections</span>
+                            <span class="status-value" id="feedbackNepali">0 entries</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Sinhalese Corrections</span>
+                            <span class="status-value" id="feedbackSinhalese">0 entries</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="brand-name">TransLingua</span>
+                <span class="footer-text">AI-Powered Translation System</span>
+            </div>
+            <div class="footer-info">
+                <span>Supports offline operation</span>
+                <span class="footer-dot">·</span>
+                <span>Nepali & Sinhalese → English</span>
+                <span class="footer-dot">·</span>
+                <span>Machine Learning Capable</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
