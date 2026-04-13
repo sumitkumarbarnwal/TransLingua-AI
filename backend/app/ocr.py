@@ -1,6 +1,7 @@
 """
-OCR Module — Extracts text from images using Tesseract OCR (primary) or EasyOCR (fallback).
+OCR Module — Extracts text from images using Tesseract OCR.
 Supports Nepali (Devanagari) and Sinhalese (Sinhala) scripts.
+Production: Tesseract only (no EasyOCR for memory efficiency)
 """
 try:
     import pytesseract
@@ -8,14 +9,6 @@ try:
 except ImportError as e:
     pytesseract = None
     PYTESSERACT_AVAILABLE = False
-
-try:
-    import easyocr
-    EASYOCR_AVAILABLE = True
-except Exception as e:
-    easyocr = None
-    EASYOCR_AVAILABLE = False
-    print(f"Warning: EasyOCR import failed: {type(e).__name__}: {e}")
     
 from PIL import Image, ImageEnhance, ImageFilter
 from pathlib import Path
@@ -27,14 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import TESSERACT_CMD, OCR_LANGUAGES
 
 logger = logging.getLogger(__name__)
-logger.info(f"OCR Module loaded - Tesseract: {PYTESSERACT_AVAILABLE}, EasyOCR: {EASYOCR_AVAILABLE}")
+logger.info(f"OCR Module loaded - Tesseract: {PYTESSERACT_AVAILABLE}")
 
 # Configure Tesseract path
 if PYTESSERACT_AVAILABLE and os.path.exists(TESSERACT_CMD):
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
-
-# Initialize EasyOCR reader (global, loaded once)
-_easyocr_readers = {}
 
 
 def preprocess_image(image: Image.Image) -> Image.Image:
@@ -185,107 +175,6 @@ def extract_text_from_image_tesseract(
 
     except Exception as e:
         logger.error(f"OCR extraction failed: {str(e)}")
-        return {
-            "success": False,
-            "text": "",
-            "language": language,
-            "confidence": 0,
-            "word_count": 0,
-            "words": [],
-            "error": str(e),
-        }
-
-
-def extract_text_with_easyocr(
-    image_path: str,
-    language: str = "nepali"
-) -> dict:
-    """
-    Extract text from an image using EasyOCR (Python-based, no external dependencies).
-    Works on Windows, Mac, and Linux without additional system installations.
-    
-    Args:
-        image_path: Path to the image file
-        language: Source language ('nepali' or 'sinhalese')
-    
-    Returns:
-        dict with extracted text and confidence
-    """
-    if not EASYOCR_AVAILABLE:
-        logger.error("EasyOCR not installed. Install with: pip install easyocr")
-        return {
-            "success": False,
-            "text": "",
-            "language": language,
-            "confidence": 0,
-            "word_count": 0,
-            "words": [],
-            "error": "EasyOCR not installed",
-        }
-    
-    try:
-        # Map language to EasyOCR code
-        lang_map = {"nepali": "ne", "sinhalese": "si"}
-        ocr_lang = lang_map.get(language, "en")
-        
-        # Initialize reader if not already done
-        if ocr_lang not in _easyocr_readers:
-            logger.info(f"Loading EasyOCR model for {language}...")
-            _easyocr_readers[ocr_lang] = easyocr.Reader([ocr_lang], gpu=False)
-        
-        reader = _easyocr_readers[ocr_lang]
-        
-        # Read image
-        image = Image.open(image_path)
-        
-        # Convert PIL to numpy array for EasyOCR
-        import numpy as np
-        image_array = np.array(image)
-        
-        # Extract text
-        results = reader.readtext(image_array)
-        
-        # Parse results
-        text_lines = []
-        words = []
-        confidences = []
-        
-        for (bbox, text, confidence) in results:
-            text_lines.append(text)
-            confidences.append(confidence)
-            
-            # Extract bounding box coordinates
-            x_coords = [point[0] for point in bbox]
-            y_coords = [point[1] for point in bbox]
-            
-            words.append({
-                "text": text,
-                "confidence": round(confidence * 100, 2),
-                "x": int(min(x_coords)),
-                "y": int(min(y_coords)),
-                "width": int(max(x_coords) - min(x_coords)),
-                "height": int(max(y_coords) - min(y_coords)),
-            })
-        
-        full_text = " ".join(text_lines)
-        avg_confidence = sum(confidences) / len(confidences) if confidences else 0
-        
-        return {
-            "success": True,
-            "text": full_text.strip(),
-            "language": language,
-            "confidence": round(avg_confidence * 100, 2),
-            "word_count": len(words),
-            "words": words,
-            "image_info": {
-                "size": image.size,
-                "mode": image.mode,
-            },
-            "method": "easyocr",
-        }
-    
-    except Exception as e:
-        logger.error(f"EasyOCR extraction failed: {str(e)}")
         return {
             "success": False,
             "text": "",
