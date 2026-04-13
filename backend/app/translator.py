@@ -21,6 +21,7 @@ try:
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
+    # Production uses Groq LLM API only - transformers not needed
 
 # Dummy config (so it runs standalone if config missing)
 try:

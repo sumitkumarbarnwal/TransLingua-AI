@@ -14,11 +14,11 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements from backend folder
-COPY backend/requirements.txt .
+# Copy production requirements from backend folder (lightweight - no torch/transformers)
+COPY backend/requirements-prod.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies (minimal footprint for Groq LLM API)
+RUN pip install --no-cache-dir -r requirements-prod.txt
 
 # Copy the rest of the application
 # We copy everything so that models/ and frontend/ are accessible
