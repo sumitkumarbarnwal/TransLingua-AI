@@ -115,9 +115,13 @@ class TranslationEngine:
         }
 
     def _translate_llm(self, text: str, language: str) -> dict:
-
+        """Translate using Groq LLM API via HTTP."""
         try:
+            if not LLM_API_KEY:
+                return {"success": False, "error": "LLM_API_KEY not configured"}
+
             url = f"{LLM_BASE_URL.rstrip('/')}/chat/completions"
+            logger.info(f"Calling LLM API: {url}")
 
             headers = {
                 "Authorization": f"Bearer {LLM_API_KEY}",
@@ -127,24 +131,37 @@ class TranslationEngine:
             payload = {
                 "model": LLM_MODEL,
                 "messages": [
-                    {"role": "system", "content": "You are a professional translator."},
-                    {"role": "user", "content": f"Translate {language} to English:\n{text}"}
+                    {"role": "system", "content": "You are a professional translator. Translate the given text to English."},
+                    {"role": "user", "content": f"Translate the following {language} text to English:\n\n{text}"}
                 ],
-                "temperature": 0.3
+                "temperature": 0.3,
+                "max_tokens": 2048
             }
 
+            logger.info(f"Payload: model={LLM_MODEL}, text_length={len(text)}")
             res = requests.post(url, headers=headers, json=payload, timeout=30)
+            
+            logger.info(f"Response status: {res.status_code}")
 
             if res.status_code != 200:
-                return {"success": False, "error": res.text}
+                error_msg = res.text
+                logger.error(f"LLM API error: {error_msg}")
+                return {"success": False, "error": f"API error {res.status_code}: {error_msg[:200]}"}
 
             data = res.json()
+            
+            if "choices" not in data or not data["choices"]:
+                logger.error(f"Invalid response structure: {data}")
+                return {"success": False, "error": "Invalid API response structure"}
+            
             translated = data["choices"][0]["message"]["content"].strip()
+            logger.info(f"Translation successful: {len(translated)} chars")
 
-            return {"success": True, "translated_text": translated, "method": "llm"}
+            return {"success": True, "translated_text": translated, "method": "llm_api"}
 
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            logger.error(f"LLM translation error: {str(e)}", exc_info=True)
+            return {"success": False, "error": f"Translation failed: {str(e)}"}
 
     def _translate_local(self, text: str, language: str, max_length: int) -> dict:
 

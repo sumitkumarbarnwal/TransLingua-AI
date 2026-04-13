@@ -174,21 +174,33 @@ async def translate_text(request: TranslationRequest):
     """
     Translate Nepali or Sinhalese text to English.
     """
-    result = translator.translate(
-        text=request.text,
-        language=request.language.value
-    )
+    try:
+        result = translator.translate(
+            text=request.text,
+            language=request.language.value
+        )
 
-    return {
-        "success": result["success"],
-        "source_text": request.text,
-        "translated_text": result["translated_text"],
-        "source_language": request.language.value,
-        "target_language": "english",
-        "method": result.get("method", "unknown"),
-        "chunks_processed": result.get("chunks_processed", 0),
-        "error": result.get("error"),
-    }
+        return {
+            "success": result["success"],
+            "source_text": request.text,
+            "translated_text": result.get("translated_text", ""),
+            "source_language": request.language.value,
+            "target_language": "english",
+            "method": result.get("method", "unknown"),
+            "chunks_processed": result.get("chunks_processed", 0),
+            "error": result.get("error"),
+        }
+    except Exception as e:
+        logger.error(f"Translation failed: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "source_text": request.text,
+            "translated_text": "",
+            "source_language": request.language.value,
+            "target_language": "english",
+            "method": "error",
+            "error": str(e),
+        }
 
 
 @app.post("/api/pipeline")
