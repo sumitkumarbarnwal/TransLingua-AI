@@ -90,29 +90,40 @@ class TranslationEngine:
             return False
 
     def translate(self, text: str, language: str = "nepali", max_length: int = 512) -> dict:
+        """Translate text using LLM API. Returns safe dict even on error."""
+        try:
+            if not text or not text.strip():
+                return {
+                    "success": True, 
+                    "translated_text": "",
+                    "method": "none"
+                }
 
-        if not text or not text.strip():
-            return {"success": True, "translated_text": ""}
-
-        # Try LLM first (production - Groq API)
-        if self.use_llm_api:
-            result = self._translate_llm(text, language)
-            if result["success"]:
+            # Try LLM first (production - Groq API)
+            if self.use_llm_api:
+                logger.info(f"Using LLM API for {language} translation")
+                result = self._translate_llm(text, language)
+                if result["success"]:
+                    logger.info("LLM translation successful")
+                    return result
+                logger.warning(f"LLM translation failed: {result.get('error')}")
                 return result
-            # If LLM fails, log but don't fall back to local in production to save memory
-            logger.warning(f"LLM translation failed: {result.get('error')}")
-            return result
 
-        # Try local only if LLM not configured (dev mode)
-        if TRANSFORMERS_AVAILABLE:
-            return self._translate_local(text, language, max_length)
-
-        # Final fallback
-        return {
-            "success": False,
-            "translated_text": text,
-            "error": "No model available (install transformers or enable LLM)"
-        }
+            # Fallback if LLM not configured
+            logger.warning("LLM not configured, using fallback response")
+            return {
+                "success": False,
+                "translated_text": text,
+                "error": "LLM not configured"
+            }
+        
+        except Exception as e:
+            logger.error(f"Unexpected error in translate(): {str(e)}", exc_info=True)
+            return {
+                "success": False,
+                "translated_text": text,
+                "error": f"Internal error: {str(e)}"
+            }
 
     def _translate_llm(self, text: str, language: str) -> dict:
         """Translate using Groq LLM API via HTTP."""

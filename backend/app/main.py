@@ -172,34 +172,62 @@ async def extract_text(
 @app.post("/api/translate")
 async def translate_text(request: TranslationRequest):
     """
-    Translate Nepali or Sinhalese text to English.
+    Translate Nepali or Sinhalese text to English using Groq LLM API.
     """
     try:
+        logger.info(f"Translation request: language={request.language.value}, text_len={len(request.text)}")
+        
+        if not request.text or not request.text.strip():
+            return {
+                "success": True,
+                "source_text": request.text,
+                "translated_text": "",
+                "source_language": request.language.value,
+                "target_language": "english",
+                "method": "none",
+                "error": None,
+            }
+        
         result = translator.translate(
             text=request.text,
             language=request.language.value
         )
+        
+        logger.info(f"Translation result: success={result.get('success')}")
 
+        # Ensure all required fields exist
         return {
-            "success": result["success"],
+            "success": result.get("success", False),
             "source_text": request.text,
             "translated_text": result.get("translated_text", ""),
             "source_language": request.language.value,
             "target_language": "english",
             "method": result.get("method", "unknown"),
-            "chunks_processed": result.get("chunks_processed", 0),
             "error": result.get("error"),
         }
-    except Exception as e:
-        logger.error(f"Translation failed: {str(e)}", exc_info=True)
+    
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
         return {
             "success": False,
-            "source_text": request.text,
+            "source_text": request.text if hasattr(request, 'text') else "",
             "translated_text": "",
-            "source_language": request.language.value,
+            "source_language": "unknown",
             "target_language": "english",
             "method": "error",
-            "error": str(e),
+            "error": f"Validation error: {str(e)}",
+        }
+    
+    except Exception as e:
+        logger.error(f"Translation endpoint error: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "source_text": getattr(request, 'text', ''),
+            "translated_text": "",
+            "source_language": getattr(request, 'language', 'unknown'),
+            "target_language": "english",
+            "method": "error",
+            "error": f"Server error: {str(e)}",
         }
 
 
