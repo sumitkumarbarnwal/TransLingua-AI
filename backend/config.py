@@ -43,8 +43,15 @@ DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 # LLM Translation Settings
 USE_LLM = os.getenv("USE_LLM", "true").lower() == "true"
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1")
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.1-8b-instant")
+
+# Debug logging
+import sys
+print(f"[CONFIG] USE_LLM={USE_LLM}", file=sys.stderr)
+print(f"[CONFIG] LLM_API_KEY={'***' if LLM_API_KEY else 'NOT SET'}", file=sys.stderr)
+print(f"[CONFIG] LLM_BASE_URL={LLM_BASE_URL}", file=sys.stderr)
+print(f"[CONFIG] LLM_MODEL={LLM_MODEL}", file=sys.stderr)
 
 # File upload settings
 MAX_FILE_SIZE_MB = 50

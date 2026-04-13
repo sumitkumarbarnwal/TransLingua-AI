@@ -129,10 +129,19 @@ class TranslationEngine:
         """Translate using Groq LLM API via HTTP."""
         try:
             if not LLM_API_KEY:
+                logger.error("LLM_API_KEY not configured")
                 return {"success": False, "error": "LLM_API_KEY not configured"}
 
-            url = f"{LLM_BASE_URL.rstrip('/')}/chat/completions"
-            logger.info(f"Calling LLM API: {url}")
+            # Validate and construct URL safely
+            base_url = LLM_BASE_URL.rstrip('/') if LLM_BASE_URL else "https://api.groq.com/openai/v1"
+            
+            # Ensure it looks like a real URL
+            if not base_url.startswith(('http://', 'https://')):
+                base_url = "https://api.groq.com/openai/v1"
+                logger.warning(f"Invalid LLM_BASE_URL, using default: {base_url}")
+            
+            url = f"{base_url}/chat/completions"
+            logger.info(f"LLM API URL: {url}")
 
             headers = {
                 "Authorization": f"Bearer {LLM_API_KEY}",
@@ -140,7 +149,7 @@ class TranslationEngine:
             }
 
             payload = {
-                "model": LLM_MODEL,
+                "model": LLM_MODEL or "llama-3.1-8b-instant",
                 "messages": [
                     {"role": "system", "content": "You are a professional translator. Translate the given text to English."},
                     {"role": "user", "content": f"Translate the following {language} text to English:\n\n{text}"}
@@ -149,21 +158,21 @@ class TranslationEngine:
                 "max_tokens": 2048
             }
 
-            logger.info(f"Payload: model={LLM_MODEL}, text_length={len(text)}")
+            logger.info(f"Calling LLM: model={payload['model']}, text_len={len(text)}")
             res = requests.post(url, headers=headers, json=payload, timeout=30)
             
-            logger.info(f"Response status: {res.status_code}")
+            logger.info(f"LLM response status: {res.status_code}")
 
             if res.status_code != 200:
-                error_msg = res.text
-                logger.error(f"LLM API error: {error_msg}")
-                return {"success": False, "error": f"API error {res.status_code}: {error_msg[:200]}"}
+                error_msg = res.text[:500]
+                logger.error(f"LLM API error {res.status_code}: {error_msg}")
+                return {"success": False, "error": f"API error {res.status_code}: {error_msg}"}
 
             data = res.json()
             
             if "choices" not in data or not data["choices"]:
-                logger.error(f"Invalid response structure: {data}")
-                return {"success": False, "error": "Invalid API response structure"}
+                logger.error(f"Invalid response structure: {list(data.keys())}")
+                return {"success": False, "error": "Invalid API response"}
             
             translated = data["choices"][0]["message"]["content"].strip()
             logger.info(f"Translation successful: {len(translated)} chars")
@@ -171,7 +180,7 @@ class TranslationEngine:
             return {"success": True, "translated_text": translated, "method": "llm_api"}
 
         except Exception as e:
-            logger.error(f"LLM translation error: {str(e)}", exc_info=True)
+            logger.error(f"LLM error: {str(e)}", exc_info=True)
             return {"success": False, "error": f"Translation failed: {str(e)}"}
 
     def _translate_local(self, text: str, language: str, max_length: int) -> dict:
