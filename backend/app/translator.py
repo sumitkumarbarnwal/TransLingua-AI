@@ -165,6 +165,20 @@ class TranslationEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def get_model_status(self) -> dict:
+        """Return status of translation models and LLM."""
+        return {
+            "llm_api": {
+                "available": self.use_llm_api,
+                "provider": "Groq" if self.use_llm_api else "N/A",
+                "model": "llama-3.1-8b-instant" if self.use_llm_api else "N/A",
+            },
+            "local_models": {
+                "available": False,  # Production uses LLM only
+                "note": "Local models disabled to reduce memory usage on free tier"
+            }
+        }
+
 
 # Create global translator instance for production
 translator = TranslationEngine()

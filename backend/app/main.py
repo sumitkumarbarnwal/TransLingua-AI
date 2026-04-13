@@ -303,12 +303,11 @@ async def system_status():
     """
     Get system status including model availability and Tesseract configuration.
     """
-    import pytesseract
-
     # Check Tesseract
     tesseract_available = False
     tesseract_languages = []
     try:
+        import pytesseract
         tesseract_languages = pytesseract.get_languages()
         tesseract_available = True
     except Exception:
