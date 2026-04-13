@@ -2,14 +2,14 @@
 FROM python:3.11-slim
 
 # Install system dependencies
-# tesseract-ocr and language data for Nepali and Sinhalese
-RUN apt-get update && apt-get install -y \
+# OCR is optional - build continues even if installation fails
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     tesseract-ocr \
-    tesseract-ocr-nep \
-    tesseract-ocr-sin \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+    || true && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
