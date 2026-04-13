@@ -31,7 +31,7 @@ OCR_LANGUAGES = {
 
 # Translation model mapping (HuggingFace model identifiers)
 TRANSLATION_MODELS = {
-    "nepali": "Helsinki-NLP/opus-mt-hi-en",      # Hindi/Nepali to English (Devanagari)
+    "nepali": "Helsinki-NLP/opus-mt-hi-en",       # Hindi to English (Nepali uses same Devanagari script)
     "sinhalese": "Helsinki-NLP/opus-mt-mul-en",   # Multilingual to English (covers Sinhalese)
 }
 
@@ -39,6 +39,12 @@ TRANSLATION_MODELS = {
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
+
+# LLM Translation Settings
+USE_LLM = os.getenv("USE_LLM", "true").lower() == "true"
+LLM_API_KEY = os.getenv("LLM_API_KEY", "")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1")
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
 # File upload settings
 MAX_FILE_SIZE_MB = 50

@@ -1,8 +1,22 @@
 """
-OCR Module — Extracts text from images using Tesseract OCR.
+OCR Module — Extracts text from images using Tesseract OCR (primary) or EasyOCR (fallback).
 Supports Nepali (Devanagari) and Sinhalese (Sinhala) scripts.
 """
-import pytesseract
+try:
+    import pytesseract
+    PYTESSERACT_AVAILABLE = True
+except ImportError as e:
+    pytesseract = None
+    PYTESSERACT_AVAILABLE = False
+
+try:
+    import easyocr
+    EASYOCR_AVAILABLE = True
+except Exception as e:
+    easyocr = None
+    EASYOCR_AVAILABLE = False
+    print(f"Warning: EasyOCR import failed: {type(e).__name__}: {e}")
+    
 from PIL import Image, ImageEnhance, ImageFilter
 from pathlib import Path
 import logging
@@ -13,10 +27,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import TESSERACT_CMD, OCR_LANGUAGES
 
 logger = logging.getLogger(__name__)
+logger.info(f"OCR Module loaded - Tesseract: {PYTESSERACT_AVAILABLE}, EasyOCR: {EASYOCR_AVAILABLE}")
 
 # Configure Tesseract path
-if os.path.exists(TESSERACT_CMD):
+if PYTESSERACT_AVAILABLE and os.path.exists(TESSERACT_CMD):
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
+
+# Initialize EasyOCR reader (global, loaded once)
+_easyocr_readers = {}
 
 
 def preprocess_image(image: Image.Image) -> Image.Image:
@@ -54,17 +72,61 @@ def extract_text_from_image(
     config_options: str = "--psm 6"
 ) -> dict:
     """
-    Extract text from an image file using Tesseract OCR.
+    Extract text from an image file using Tesseract OCR (primary) or EasyOCR (fallback).
 
     Args:
         image_path: Path to the image file
         language: Source language ('nepali' or 'sinhalese')
-        preprocess: Whether to apply image preprocessing
+        preprocess: Whether to apply image preprocessing (Tesseract only)
         config_options: Tesseract configuration options
 
     Returns:
         dict with extracted text, confidence, and metadata
     """
+    # Try Tesseract first
+    if PYTESSERACT_AVAILABLE:
+        logger.info("Attempting OCR with Tesseract...")
+        result = extract_text_from_image_tesseract(image_path, language, preprocess, config_options)
+        if result["success"]:
+            return result
+        logger.warning(f"Tesseract OCR failed: {result.get('error')}. Trying EasyOCR fallback...")
+    
+    # Fallback to EasyOCR
+    if EASYOCR_AVAILABLE:
+        logger.info("Attempting OCR with EasyOCR...")
+        return extract_text_with_easyocr(image_path, language)
+    
+    # No OCR available
+    logger.error("No OCR engine available (install tesseract or easyocr)")
+    return {
+        "success": False,
+        "text": "",
+        "language": language,
+        "confidence": 0,
+        "word_count": 0,
+        "words": [],
+        "error": "No OCR engine available. Install tesseract or easyocr.",
+    }
+
+
+def extract_text_from_image_tesseract(
+    image_path: str,
+    language: str = "nepali",
+    preprocess: bool = True,
+    config_options: str = "--psm 6"
+) -> dict:
+    """Tesseract OCR extraction."""
+    if not PYTESSERACT_AVAILABLE:
+        return {
+            "success": False,
+            "text": "",
+            "language": language,
+            "confidence": 0,
+            "word_count": 0,
+            "words": [],
+            "error": "Tesseract/pytesseract not installed",
+        }
+    
     try:
         lang_code = OCR_LANGUAGES.get(language, "nep")
         image = Image.open(image_path)
@@ -138,6 +200,107 @@ def extract_text_from_image(
         }
 
 
+def extract_text_with_easyocr(
+    image_path: str,
+    language: str = "nepali"
+) -> dict:
+    """
+    Extract text from an image using EasyOCR (Python-based, no external dependencies).
+    Works on Windows, Mac, and Linux without additional system installations.
+    
+    Args:
+        image_path: Path to the image file
+        language: Source language ('nepali' or 'sinhalese')
+    
+    Returns:
+        dict with extracted text and confidence
+    """
+    if not EASYOCR_AVAILABLE:
+        logger.error("EasyOCR not installed. Install with: pip install easyocr")
+        return {
+            "success": False,
+            "text": "",
+            "language": language,
+            "confidence": 0,
+            "word_count": 0,
+            "words": [],
+            "error": "EasyOCR not installed",
+        }
+    
+    try:
+        # Map language to EasyOCR code
+        lang_map = {"nepali": "ne", "sinhalese": "si"}
+        ocr_lang = lang_map.get(language, "en")
+        
+        # Initialize reader if not already done
+        if ocr_lang not in _easyocr_readers:
+            logger.info(f"Loading EasyOCR model for {language}...")
+            _easyocr_readers[ocr_lang] = easyocr.Reader([ocr_lang], gpu=False)
+        
+        reader = _easyocr_readers[ocr_lang]
+        
+        # Read image
+        image = Image.open(image_path)
+        
+        # Convert PIL to numpy array for EasyOCR
+        import numpy as np
+        image_array = np.array(image)
+        
+        # Extract text
+        results = reader.readtext(image_array)
+        
+        # Parse results
+        text_lines = []
+        words = []
+        confidences = []
+        
+        for (bbox, text, confidence) in results:
+            text_lines.append(text)
+            confidences.append(confidence)
+            
+            # Extract bounding box coordinates
+            x_coords = [point[0] for point in bbox]
+            y_coords = [point[1] for point in bbox]
+            
+            words.append({
+                "text": text,
+                "confidence": round(confidence * 100, 2),
+                "x": int(min(x_coords)),
+                "y": int(min(y_coords)),
+                "width": int(max(x_coords) - min(x_coords)),
+                "height": int(max(y_coords) - min(y_coords)),
+            })
+        
+        full_text = " ".join(text_lines)
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+        
+        return {
+            "success": True,
+            "text": full_text.strip(),
+            "language": language,
+            "confidence": round(avg_confidence * 100, 2),
+            "word_count": len(words),
+            "words": words,
+            "image_info": {
+                "size": image.size,
+                "mode": image.mode,
+            },
+            "method": "easyocr",
+        }
+    
+    except Exception as e:
+        logger.error(f"EasyOCR extraction failed: {str(e)}")
+        return {
+            "success": False,
+            "text": "",
+            "language": language,
+            "confidence": 0,
+            "word_count": 0,
+            "words": [],
+            "error": str(e),
+        }
+
+
 def extract_text_from_pil_image(
     image: Image.Image,
     language: str = "nepali",
@@ -148,6 +311,18 @@ def extract_text_from_pil_image(
     Extract text from a PIL Image object directly.
     Used when processing PDF pages converted to images.
     """
+    if not pytesseract:
+        logger.error("Tesseract/pytesseract not installed. Cannot perform OCR.")
+        return {
+            "success": False,
+            "text": "",
+            "language": language,
+            "confidence": 0,
+            "word_count": 0,
+            "words": [],
+            "error": "Tesseract OCR not installed",
+        }
+    
     try:
         lang_code = OCR_LANGUAGES.get(language, "nep")
 

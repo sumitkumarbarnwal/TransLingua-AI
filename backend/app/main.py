@@ -185,6 +185,7 @@ async def translate_text(request: TranslationRequest):
         "translated_text": result["translated_text"],
         "source_language": request.language.value,
         "target_language": "english",
+        "method": result.get("method", "unknown"),
         "chunks_processed": result.get("chunks_processed", 0),
         "error": result.get("error"),
     }
