@@ -83,21 +83,17 @@ def extract_text_from_image(
     Returns:
         dict with extracted text, confidence, and metadata
     """
-    # Try Tesseract first
+    # Try Tesseract first (production - already in Docker)
     if PYTESSERACT_AVAILABLE:
         logger.info("Attempting OCR with Tesseract...")
         result = extract_text_from_image_tesseract(image_path, language, preprocess, config_options)
         if result["success"]:
             return result
-        logger.warning(f"Tesseract OCR failed: {result.get('error')}. Trying EasyOCR fallback...")
+        logger.warning(f"Tesseract OCR failed: {result.get('error')}")
     
-    # Fallback to EasyOCR
-    if EASYOCR_AVAILABLE:
-        logger.info("Attempting OCR with EasyOCR...")
-        return extract_text_with_easyocr(image_path, language)
-    
-    # No OCR available
-    logger.error("No OCR engine available (install tesseract or easyocr)")
+    # Skip EasyOCR in production to save memory (~200MB)
+    # Only use if Tesseract completely unavailable
+    logger.error("OCR failed - Tesseract not available")
     return {
         "success": False,
         "text": "",
