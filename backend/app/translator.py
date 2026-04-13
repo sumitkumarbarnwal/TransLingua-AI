@@ -166,8 +166,10 @@ class TranslationEngine:
             return {"success": False, "error": str(e)}
 
 
-# -----------------------------
+# Create global translator instance for production
+translator = TranslationEngine()
+
+
 # TEST CASES
-# -----------------------------
 if __name__ == "__main__":
     engine = TranslationEngine()
